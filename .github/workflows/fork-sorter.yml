@@ -1,2 +1,33 @@
-- name: GitHub sort forks
-  uses: ActionCloud/sort-forks-action@v1
+name: Screenly-Forks
+
+on:
+  # a cron schedule to run periodically
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  test_sort_forks:
+    runs-on: ubuntu-latest
+    name: A job to test sort forks
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Screenly-Fork-Sorter
+      id: sort
+      uses: actioncloud/sort-forks-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    # you need git commit to push the forks data to the folder: .github/actioncloud
+    - name: Git commit
+      run: |
+        # git commit if there's any change
+        if test -n "$(git status --porcelain 2>/dev/null)"; then
+            git config --global user.email "idegorepl@gmail.com"
+            git config --global user.name "ActionCloud Bot"
+            git add .
+            git commit -m "Update forks data"
+            git push
+        fi
+    # you can get badge code of ActionCloud viewer App, and click it to view your data
+    - name: Check output
+      run: echo '${{ steps.sort.outputs.actioncloud-badge }}'
